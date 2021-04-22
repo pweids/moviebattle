@@ -1,0 +1,12 @@
+<!doctype html>
+<head>
+    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='style.css') }}">
+    <title>Baker Basement</title>
+</head>
+<h1>Movies in genre "{{ genre }}"</h1>
+
+<ul>
+{% for movie in movies %}
+    <li><a href="https://www.imdb.com{{ movie.url }}">{{ movie.title }}</a></li>
+{% endfor %}
+</ul>

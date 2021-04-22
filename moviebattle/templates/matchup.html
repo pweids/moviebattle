@@ -1,0 +1,14 @@
+<!doctype html>
+<head>
+    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='style.css') }}">
+    <title>Baker Basement</title>
+</head>
+<h1>Matchup: {{ left.title }} vs {{ right.title }}</h1>
+<div style="float: left;">
+<h3>{{ left.title }}</h3>
+<a href="/set_winner/{{ left.url }}"><img src="{{url_for('static', filename='images/'+ left.url +'.jpg')}}" style="width:300px;" /></a>
+</div>
+<div style="float: left; margin-left: 15px;">
+<h3>{{ right.title }}</h3>
+<a href="/set_winner/{{ right.url }}"><img src="{{url_for('static', filename='images/'+ right.url +'.jpg')}}" style="width:300px;" /></a>
+</div>

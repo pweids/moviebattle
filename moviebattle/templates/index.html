@@ -1,0 +1,114 @@
+<!doctype html>
+<head>
+    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='style.css') }}">
+    <title>Baker Basement</title>
+</head>
+<h1>Welcome to Baker Basement Movie Night!</h1>
+
+<h2>Movies</h2>
+<p>Add a movie:
+<input id="new_movie" />
+</p>
+<button id="submit">Submit</button>
+
+
+<p>You have {{ movies|rejectattr('viewed')|list|count }} unseen movies in the database ({{ movies|count }} total).</p>
+
+<button id="showhide">Show/Hide Viewed</button>
+<button id="checkAll">Select All</button>
+<button id="uncheckAll">Deselect All</button>
+<button id="start">Start Battle</button>
+<select name="genres" id="genres">
+    <option value="all">All</option>
+    {% for genre in genres %}
+    <option value="{{ genre }}">{{ genre }}</option>
+    {% endfor %}
+</select>
+<ul id="list">
+{% for movie in movies %}
+    <li style="list-style-type: none; font-size:20px; {{ ' display: none;' if movie.viewed }}" 
+        class="{{ 'viewed' if movie.viewed else 'unviewed' }} All {{ ' '.join(movie.genres) }}">
+        <input type="checkbox" value="{{ movie.url }}">  <a href="https://www.imdb.com/title/{{ movie.url }}">{{ movie.title }}</a>
+        {{ movie.date[:4] }}
+        {% if not movie.viewed %} [<a href="/viewed/{{ movie.url }}">mark as viewed</a>]
+        {% else %} [seen] {% endif %} 
+    </li>
+{% endfor %}
+</ul>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+document.getElementById('submit').onclick = () => {
+  const url = document.getElementById('new_movie').value;
+  $.ajax({
+    type: "POST",
+    url: "/add",
+    // The key needs to match your method's input parameter (case-sensitive).
+    data: JSON.stringify({ url: url }),
+    contentType: "application/json; charset=utf-8",
+    dataType: "json",
+    success: function(data){
+        document.getElementById('new_movie').value= "";
+        location.reload();
+    },
+    error: function(errMsg) {
+        console.log(errMsg);
+        alert(errMsg.responseText);
+    }
+});
+}
+
+document.getElementById('start').onclick = () => {
+    urls = $.map($('input:checked'), x => x.value)
+    console.log()
+
+    $.ajax({
+    type: "POST",
+    url: "/create_battle",
+    // The key needs to match your method's input parameter (case-sensitive).
+    data: JSON.stringify({ urls: urls }),
+    contentType: "application/json; charset=utf-8",
+    dataType: "json",
+    success: function(data){
+        window.location.href = "/battle";
+    },
+    error: function(errMsg) {
+        console.log(errMsg);
+        alert(errMsg.responseText);
+    }
+});
+};
+
+let show_viewed = false;
+let genre_filter = 'All';
+
+function displayElements() {
+    $('li').hide();
+    els = $('li').filter('.'+genre_filter);
+    if (!show_viewed) {
+        els = els.filter('.unviewed');
+    }
+    els.show();
+}
+
+$("#checkAll").click(function(){
+    $('input:checkbox:visible').prop('checked', true);
+});
+
+$("#uncheckAll").click(function(){
+    $('input:checkbox').prop('checked', false);
+});
+
+
+$('#genres').change(function(){
+    text = $('#genres').find(':selected').text();
+    genre_filter = text;
+    displayElements();
+});
+
+$('#showhide').click(function(){
+    show_viewed = !show_viewed;
+    displayElements();
+});
+
+</script>

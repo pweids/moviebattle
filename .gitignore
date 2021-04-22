@@ -1,0 +1,7 @@
+__pycache__/
+node_modules/
+.noseids
+*.db
+Pipfile*
+package*.json
+static/images/
