@@ -12,6 +12,7 @@ class Movie:
     description: str
     mpaa_rating: str
     review_rating: float
+    trailer: str
     viewed: bool
 
     def __hash__(self):

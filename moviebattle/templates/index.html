@@ -18,6 +18,7 @@
 <button id="checkAll">Select All</button>
 <button id="uncheckAll">Deselect All</button>
 <button id="start">Start Battle</button>
+<button id="start18">Start Random 8 Battle</button>
 <select name="genres" id="genres">
     <option value="all">All</option>
     {% for genre in genres %}
@@ -29,15 +30,24 @@
     <li style="list-style-type: none; font-size:20px; {{ ' display: none;' if movie.viewed }}" 
         class="{{ 'viewed' if movie.viewed else 'unviewed' }} All {{ ' '.join(movie.genres) }}">
         <input type="checkbox" value="{{ movie.url }}">  <a href="https://www.imdb.com/title/{{ movie.url }}">{{ movie.title }}</a>
-        {{ movie.date[:4] }}
-        {% if not movie.viewed %} [<a href="/viewed/{{ movie.url }}">mark as viewed</a>]
-        {% else %} [seen] {% endif %} 
+        ({{ ', '.join(movie.directors) }}. {{ movie.date[:4] }})
+        {% if not movie.viewed %} [<a href="/viewed/{{ movie.url }}">mark viewed</a>]
+        {% else %} [seen] {% endif %}
+        [<a href="/delete/{{ movie.url }}">&#9249;</a>]
     </li>
 {% endfor %}
 </ul>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
+$('#new_movie').keypress(function (e) {
+  if (e.which == 13) {
+    $('#submit').click();
+    return false;
+  }
+  console.log(e.which);
+});
+
 document.getElementById('submit').onclick = () => {
   const url = document.getElementById('new_movie').value;
   $.ajax({
@@ -60,13 +70,30 @@ document.getElementById('submit').onclick = () => {
 
 document.getElementById('start').onclick = () => {
     urls = $.map($('input:checked'), x => x.value)
-    console.log()
 
     $.ajax({
     type: "POST",
     url: "/create_battle",
     // The key needs to match your method's input parameter (case-sensitive).
     data: JSON.stringify({ urls: urls }),
+    contentType: "application/json; charset=utf-8",
+    dataType: "json",
+    success: function(data){
+        window.location.href = "/battle";
+    },
+    error: function(errMsg) {
+        console.log(errMsg);
+        alert(errMsg.responseText);
+    }
+});
+};
+
+document.getElementById('start18').onclick = () => {
+    $.ajax({
+    type: "POST",
+    url: "/create_battle",
+    // The key needs to match your method's input parameter (case-sensitive).
+    data: JSON.stringify({ count: 8 }),
     contentType: "application/json; charset=utf-8",
     dataType: "json",
     success: function(data){

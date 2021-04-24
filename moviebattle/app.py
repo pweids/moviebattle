@@ -1,27 +1,32 @@
 from moviebattle.movie import Movie
 from moviebattle.get_movie import get_movie
-from moviebattle.db import get_movies, save_movie, update_viewed
+from moviebattle.db import get_movies, save_movie, delete_movie, update_viewed
 
 from sqlite3 import IntegrityError
 from typing import Set, List, Tuple, Optional
-from random import choices, shuffle
+from random import sample, shuffle
 from copy import copy
 
 movies: Set[Movie] = get_movies()
 
 
-def add_movie(link: str):
+def add_movie(link: str) -> Movie:
     res = get_movie(link)
     if isinstance(res, str):
         raise ValueError(f"Error: Cannot add movie: {res}")
     else:
         save_movie(res)
         movies.add(res)
+        return res
+
+def remove_movie(link: str) -> None:
+    delete_movie(link)
+    movies.remove(from_url(link))
         
 
-def get_random_movie(genre=None, count=1) -> List[Movie]:
-    ms = list(get_movies_in_genre(genre))
-    return choices(ms, k=count) if len(ms) >= count else ms
+def get_random_movie(genre=None, count=1, unviewed=False) -> List[Movie]:
+    ms = [m for m in get_movies_in_genre(genre) if not m.viewed]
+    return sample(ms, k=count) if len(ms) >= count else ms
 
 
 def get_genres() -> Set[str]:

@@ -32,6 +32,19 @@ def scrape_data(imdb_link: IMDB_ID) -> Dict:
     script = soup.find('script', type='application/ld+json')
     data = json.loads(script.string)
     data['url'] = url
+    
+    # because descriptions are truncated in the JSON
+    desc = soup.find('div', {'class': 'summary_text'})
+    if desc:
+        data['description'] = desc.text.strip()
+
+    # because English titles are ignored
+    title = soup.find('div', {'id': 'star-rating-widget'})    
+    if title:
+        title = title.get('data-title')
+    if title and title != data['name']:
+        data['name'] = title
+
     return data
 
 
@@ -49,10 +62,11 @@ def fill_movie_from_imdb(data):
     m['genres'] = data['genre'] if isinstance(data['genre'], list) else [data['genre']]
     m['directors'] = [d['name'] for d in data['director']] if isinstance(data['director'], list) else [data['director']['name']]
     m['date'] = data['datePublished']
-    m['description'] = data['description']
-    m['mpaa_rating'] = data['contentRating']
+    m['description'] = data.get('description', '')
+    m['mpaa_rating'] = data.get('contentRating', 'NR')
     m['review_rating'] = float(data['aggregateRating']['ratingValue'])
     m['actors'] = [a['name'] for a in data['actor']]
+    m['trailer'] = data['trailer'].get('embedUrl') if 'trailer' in data else None
     m['viewed'] = False
 
     save_compressed_image(data['image'], m['url'])
@@ -69,6 +83,6 @@ def get_movie(link: str) -> Union[Movie, str]:
     except ValueError as e:
         return str(e)
     except KeyError as e:
-        return "Movie does not have enough data. Not made yet?"
+        return f"Movie does not have enough data (missing {str(e)})."
     
 	

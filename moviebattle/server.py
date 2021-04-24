@@ -1,9 +1,12 @@
 from flask import Flask, render_template, jsonify, request, redirect
 from moviebattle import app as mapp
-import json
+import json, re
 app = Flask(__name__)
 
 tourney = None
+
+articles = re.compile('^(an?|the)\s')
+#sorter = lambda ms: sorted(ms, key=lambda m: articles.sub('', m.title.lower()))
 
 @app.route('/')
 def index():
@@ -11,9 +14,17 @@ def index():
     genres = list(mapp.get_genres())
     genres.sort()
 
+    global sorter
+    sort = request.args.get('sort')
+    if sort == 'date':
+        sorter = lambda ms: sorted(ms, key=lambda m: m.date)
+    elif sort == 'date-desc':
+        sorter = lambda ms: sorted(ms, key=lambda m: m.date, reverse=True)
+    else:
+        sorter = lambda ms: sorted(ms, key=lambda m: articles.sub('', m.title.lower()))
+
     movies = list(mapp.movies)
-    movies.sort(key=lambda m: m.title)
-    return render_template("index.html", count=count, movies=movies, genres=genres)
+    return render_template("index.html", count=count, movies=sorter(movies), genres=genres)
 
 
 @app.route('/genre/<genre>')
@@ -54,12 +65,23 @@ def viewed(url):
     return redirect('/')
 
 
+@app.route('/delete/<url>')
+def delete(url):
+    mapp.remove_movie(url)
+    return redirect('/')
+
+
 @app.route('/create_battle', methods=["POST"])
 def start_battle():
-    urls = request.json['urls']
-    if len(urls) <= 1:
-        return redirect('/')
-    movies = [mapp.from_url(url) for url in urls]
+    if 'count' in request.json:
+        count = request.json['count']
+        movies = list(mapp.get_random_movie(count=request.json['count']))
+        print(count)
+    else:
+        urls = request.json['urls']
+        if len(urls) <= 1:
+            return redirect('/')
+        movies = [mapp.from_url(url) for url in urls]
     global tourney
     tourney = mapp.Tournament(movies)
     return json.dumps({'success':True}), 200, {'ContentType':'application/json'}
